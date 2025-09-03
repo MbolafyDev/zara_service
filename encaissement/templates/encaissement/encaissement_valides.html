@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% load static %}
+{% load nombre %}
+
+{% block extra_css_and_scripts %}
+<style>
+  .thumb-120{
+    height:120px;background:#fff;display:flex;align-items:center;justify-content:center;
+    overflow:hidden;border-radius:.375rem
+  }
+  .thumb-120 img{max-height:100%;max-width:100%;object-fit:contain;object-position:center;display:block;background:#fff}
+  .article-list{overflow-x:hidden;list-style:disc;padding-left:1.25rem;margin-bottom:0}
+  .article-line-inner{display:flex;flex-wrap:wrap;align-items:flex-start;gap:.5rem}
+  .article-name{flex:1 1 auto;min-width:0;white-space:normal;overflow-wrap:anywhere;word-break:break-word}
+</style>
+{% endblock %}
+
+{% block title %}Encaissements validés{% endblock %}
+
+{% block content %}
+<div class="container mb-2">
+
+  <h2 class="text-center mb-2">Listes des encaissements</h2>
+
+  {% include "includes/messages_alert.html" %}
+
+  <!-- Barre d’actions -->
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <a class="btn btn-primary" href="{% url 'encaissement_non_valides' %}" {% if not is_admin %}disabled{% endif %}>
+      <i class="fa fa-money-bill"></i> Encaisser une commande
+    </a>
+
+    <div class="d-flex align-items-center gap-2">
+      <!-- Toggle d’affichage (>= lg) -->
+      <div class="view-toggle-encaissements d-none d-lg-flex gap-1"
+           data-storage-key="zr_display_encaissements">
+        <button type="button"
+                class="btn btn-outline-primary {% if display_mode == 'table' %}active{% endif %}"
+                data-mode="table" title="Mode Tableau">
+          <i class="fa fa-table"></i>
+        </button>
+        <button type="button"
+                class="btn btn-outline-primary {% if display_mode == 'cards' %}active{% endif %}"
+                data-mode="cards" title="Mode Cartes">
+          <i class="fa fa-credit-card"></i>
+        </button>
+      </div>
+
+      <!-- Bouton filtre (mobile) -->
+      <button class="btn btn-outline-primary d-lg-none" type="button"
+              data-bs-toggle="collapse" data-bs-target="#filtersCollapse"
+              aria-expanded="false" aria-controls="filtersCollapse">
+        <i class="fa fa-filter"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <div id="filtersCollapse" class="collapse d-lg-block">
+    <div class="row m-1">
+      <form id="encaissementsFiltersForm" method="get" class="row g-2 mb-2"
+            hx-get="{% url 'encaissement_valides_partial' %}"
+            hx-target="#encaissements-table-wrapper"
+            hx-swap="outerHTML"
+            hx-push-url="true"
+            hx-trigger="change delay:300ms, submit">
+
+        <!-- Date encaissement -->
+        <div class="col-md-6 col-lg-3">
+          <label for="date_encaissement" class="form-label fw-bold d-none d-lg-block">Date encaissement</label>
+          <div class="input-group">
+            <span class="input-group-text d-lg-none"><i class="fa fa-wallet"></i></span>
+            <input type="date" name="date_encaissement" id="date_encaissement" class="form-control" value="{{ date_encaissement }}">
+          </div>
+        </div>
+
+        <!-- Client -->
+        <div class="col-md-6 col-lg-4">
+          <label for="client_id" class="form-label fw-bold d-none d-lg-block">Client</label>
+          <div class="input-group">
+            <span class="input-group-text d-lg-none"><i class="fa fa-user"></i></span>
+            <select name="client_id" id="client_id" class="form-select">
+              <option value="">Tous les clients</option>
+              {% for c in clients %}
+                <option value="{{ c.id }}" {% if client_id == c.id|stringformat:"s" %}selected{% endif %}>{{ c.raison_sociale }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <!-- Paiement -->
+        <div class="col-md-6 col-lg-3">
+          <label for="paiement_id" class="form-label fw-bold d-none d-lg-block">Paiement</label>
+          <div class="input-group">
+            <span class="input-group-text d-lg-none"><i class="fa fa-coins"></i></span>
+            <select name="paiement_id" id="paiement_id" class="form-select">
+              <option value="">Tous les paiements</option>
+              {% for p in paiements %}
+                <option value="{{ p.id }}" {% if paiement_id == p.id|stringformat:"s" %}selected{% endif %}>{{ p.nom }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <!-- Bouton -->
+        <div class="col-md-6 col-lg-2 d-flex align-items-end">
+          <button type="submit" class="btn btn-outline-primary w-100">
+            <i class="fa fa-filter"></i> Filtrer
+          </button>
+        </div>
+
+        <!-- cachés -->
+        <input type="hidden" name="display" id="encaissements_display_input" value="{{ display_mode }}">
+        <input type="hidden" name="page" id="encaissements_page_input" value="{{ page_obj.number }}">
+      </form>
+    </div>
+  </div>
+
+  <!-- Zone dynamique (chargée/rafraîchie par HTMX) -->
+  <div id="encaissements-table-wrapper"
+       hx-get="{% url 'encaissement_valides_partial' %}?{{ request.GET.urlencode }}"
+       hx-target="#encaissements-table-wrapper"
+       hx-swap="outerHTML"
+       hx-trigger="load">
+    {% include "encaissement/includes/encaissements_list_wrapper.html" %}
+  </div>
+
+  <!-- Pagination -->
+  {% include "common/includes/pagination.html" with page_obj=page_obj extra_querystring=extra_querystring %}
+
+</div>
+
+<script>
+(function() {
+  const toggle = document.querySelector('.view-toggle-encaissements');
+  const form   = document.getElementById('encaissementsFiltersForm');
+  if (!form) return;
+
+  const displayInput = document.getElementById('encaissements_display_input');
+  const pageInput    = document.getElementById('encaissements_page_input');
+
+  const storageKey = (toggle && toggle.dataset.storageKey) || 'display_encaissements';
+  const getUrlPage = () => (new URLSearchParams(location.search)).get('page') || '';
+
+  const htmxSubmit = () => {
+    if (form.requestSubmit) form.requestSubmit();
+    else form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+  };
+
+  if (toggle) {
+    toggle.addEventListener('click', function(e) {
+      const btn = e.target.closest('button[data-mode]');
+      if (!btn) return;
+
+      const mode = btn.dataset.mode;
+      toggle.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      localStorage.setItem(storageKey, mode);
+      displayInput.value = mode;
+      pageInput.value = getUrlPage();
+
+      htmxSubmit();
+    });
+  }
+
+  // Changement d’un filtre -> retour page 1
+  ['date_encaissement','client_id','paiement_id'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('change', () => { pageInput.value = ''; });
+  });
+
+  // Après swap, resynchroniser page cachée avec l'URL
+  if (window.htmx) {
+    htmx.on('htmx:afterSwap', function (evt) {
+      if (evt.target && evt.target.id === 'encaissements-table-wrapper') {
+        pageInput.value = getUrlPage();
+      }
+    });
+  }
+})();
+</script>
+{% endblock %}

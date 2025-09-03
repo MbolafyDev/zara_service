@@ -1,0 +1,100 @@
+{% load nombre %}
+
+{% if ventes %}
+  {% if display_mode == 'cards' %}
+    <!-- CARTES -->
+    <div class="row g-2">
+      {% for vente in ventes %}
+      <div class="col-12 col-md-4">
+        <div class="card h-100 shadow-sm">
+          <div class="card-header d-flex justify-content-between">
+            <div>
+              <div class="small text-muted">Date</div>
+              <div class="fw-semibold">{{ vente.date_encaissement|date:"d/m/Y" }}</div>
+            </div>
+            <div class="text-end">
+              <div class="small text-muted">Facture</div>
+              <div class="fw-semibold">{{ vente.numero_facture }}</div>
+            </div>
+          </div>
+          <div class="card-body py-2">
+            <div class="mb-2">
+              <div class="small text-muted">Client</div>
+              <div class="fw-semibold">{{ vente.commande.client.raison_sociale }}</div>
+            </div>
+            <div class="mb-2">
+              <div class="small text-muted">Commande</div>
+              <div class="fw-semibold">#{{ vente.commande.numero_proforma }}</div>
+            </div>
+            <div class="mb-2 d-flex justify-content-between">
+              <div>
+                <div class="small text-muted">Paiement</div>
+                <div class="fw-semibold">{{ vente.paiement.nom }}</div>
+              </div>
+              <div class="text-end">
+                <div class="small text-muted">Montant</div>
+                <div class="fw-bold">{{ vente.montant|intpoint }}</div>
+              </div>
+            </div>
+            {% if vente.reference %}
+              <div class="small text-muted">Référence : {{ vente.reference }}</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Total -->
+    <div class="card mt-2">
+      <div class="card-body py-2 d-flex justify-content-between">
+        <span class="fw-semibold">Total encaissé</span>
+        <span class="fw-bold">{{ total_encaisse|intpoint }}</span>
+      </div>
+    </div>
+
+  {% else %}
+    <!-- TABLEAU -->
+    <div class="table-responsive">
+      <table class="table table-bordered table-striped align-middle">
+        <thead class="table-primary">
+          <tr>
+            <th>Date encaissement</th>
+            <th>N° Facture</th>
+            <th>Client</th>
+            <th>Commande</th>
+            <th>Paiement</th>
+            <th class="text-end">Montant</th>
+            <th>Référence</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for vente in ventes %}
+          <tr>
+            <td>{{ vente.date_encaissement|date:"d/m/Y" }}</td>
+            <td>{{ vente.numero_facture }}</td>
+            <td>{{ vente.commande.client.raison_sociale }}</td>
+            <td>#{{ vente.commande.numero_proforma }}</td>
+            <td>{{ vente.paiement.nom }}</td>
+            <td class="text-end">{{ vente.montant|intpoint }}</td>
+            <td>{{ vente.reference|default:"—" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot class="table-primary">
+          <tr>
+            <th colspan="5" class="text-end">Total encaissé :</th>
+            <th class="text-end">{{ total_encaisse|intpoint }}</th>
+            <th></th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  {% endif %}
+
+  <!-- Pagination (garder visible dans le wrapper si besoin en htmx) -->
+  {% include "common/includes/pagination.html" with page_obj=page_obj extra_querystring=extra_querystring %}
+
+{% else %}
+  <div class="alert alert-info">Aucun encaissement validé trouvé.</div>
+{% endif %}

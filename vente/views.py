@@ -24,6 +24,11 @@ class VenteView(LoginRequiredMixin, ListView):
     context_object_name = "commandes"
     paginate_by = 10
 
+    # ✅ AJOUTER CETTE MÉTHODE DANS LA CLASSE
+    def _display_mode(self):
+        mode = (self.request.GET.get("display") or "auto").strip().lower()
+        return mode if mode in ("auto", "table", "cards") else "auto"
+
     def get_queryset(self):
         qs = (Commande.objects
             .select_related("client", "page")
@@ -37,7 +42,6 @@ class VenteView(LoginRequiredMixin, ListView):
         filtre_statut = (self.request.GET.get("statut") or "").strip()
         page_id = (self.request.GET.get("page_id") or "").strip()
 
-        # caster au besoin
         def parse_int(s):
             try:
                 return int(s)
@@ -62,18 +66,20 @@ class VenteView(LoginRequiredMixin, ListView):
         return qs
 
     def get_context_data(self, **kwargs):
+        from urllib.parse import urlencode  # si pas déjà importé en haut
         context = super().get_context_data(**kwargs)
 
-        # récupérer queryset filtré pour calcul du montant total
         commandes_valides = self.get_queryset().exclude(statut_vente__in=["Annulée", "Supprimée"])
         total_montant = sum(c.montant_commande for c in commandes_valides)
 
-        # récupérer filtres
         filtre_date_commande = (self.request.GET.get("date_commande") or "").strip()
         filtre_service_id_raw = (self.request.GET.get("service_id") or "").strip()
         filtre_client_id_raw = (self.request.GET.get("client_id") or "").strip()
         filtre_statut = (self.request.GET.get("statut") or "").strip()
         page_id = (self.request.GET.get("page_id") or "").strip()
+
+        # ✅ utiliser la méthode nouvellement ajoutée
+        display_mode = self._display_mode()
 
         extra_querystring = urlencode({
             "date_commande": filtre_date_commande,
@@ -81,9 +87,9 @@ class VenteView(LoginRequiredMixin, ListView):
             "client_id": filtre_client_id_raw,
             "statut": filtre_statut,
             "page_id": page_id,
+            "display": display_mode,   # conserver le mode dans la pagination
         })
 
-        # ajouter au context
         context.update({
             "filtre_date_commande": filtre_date_commande,
             "filtre_service_id": filtre_service_id_raw,
@@ -97,9 +103,10 @@ class VenteView(LoginRequiredMixin, ListView):
 
             "total_montant": total_montant,
             "extra_querystring": extra_querystring,
+            "display_mode": display_mode,  # 👈 utilisé par le template
         })
-
         return context
+
 
 class CreerCommandeServiceView(LoginRequiredMixin, View):
     template_name = "vente/includes/commande.html"

@@ -11,6 +11,88 @@ from django.http import QueryDict
 from django.core.paginator import Paginator
 from vente.models import Commande, Vente
 from common.models import Pages, Caisse
+from django.db.models import F, Q, Sum
+from clients.models import Entreprise
+
+class EncaissementValideView(LoginRequiredMixin, ListView):
+    login_url = 'login'
+    template_name = "encaissement/encaissement_valides.html"
+    context_object_name = "ventes"
+    paginate_by = 10
+
+    # --- Utilitaires ---
+    def _display_mode(self):
+        mode = self.request.GET.get("display", "").strip().lower()
+        return mode if mode in ("table", "cards") else "table"
+
+    def _extra_querystring(self):
+        # Conserver les filtres dans la pagination (sauf 'page')
+        params = self.request.GET.copy()
+        params.pop("page", None)
+        return params.urlencode()
+
+    # --- Queryset filtré ---
+    def get_queryset(self):
+        qs = (
+            Vente.objects.select_related("commande__client", "paiement")
+            .filter(commande__statut_vente="Payée")
+            .order_by("-date_encaissement", "-id")
+        )
+
+        # Filtres
+        date_encaissement = (self.request.GET.get("date_encaissement") or "").strip()
+        client_id = (self.request.GET.get("client_id") or "").strip()
+        paiement_id = (self.request.GET.get("paiement_id") or "").strip()
+
+        if date_encaissement:
+            qs = qs.filter(date_encaissement=date_encaissement)
+
+        if client_id:
+            qs = qs.filter(commande__client_id=client_id)
+
+        if paiement_id:
+            qs = qs.filter(paiement_id=paiement_id)
+
+        return qs
+
+    # --- Contexte + pagination ---
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        queryset = self.get_queryset()
+
+        paginator = Paginator(queryset, self.paginate_by)
+        page_number = self.request.GET.get("page")
+        page_obj = paginator.get_page(page_number)
+
+        context["page_obj"] = page_obj
+        context["ventes"] = page_obj.object_list
+
+        total = queryset.aggregate(total=Sum("montant"))["total"] or 0
+        context["total_encaisse"] = total
+
+        # Sélecteurs
+        context["clients"] = Entreprise.objects.order_by("raison_sociale")
+        context["paiements"] = Caisse.objects.order_by("nom")
+
+        # Valeurs sélectionnées
+        context["date_encaissement"] = self.request.GET.get("date_encaissement", "")
+        context["client_id"] = self.request.GET.get("client_id", "")
+        context["paiement_id"] = self.request.GET.get("paiement_id", "")
+
+        # Affichage & pagination
+        context["display_mode"] = self._display_mode()
+        context["extra_querystring"] = self._extra_querystring()
+
+        # Date du jour
+        context["today"] = now().date()
+        return context
+
+    # --- Rendu partiel si HTMX ---
+    def render_to_response(self, context, **response_kwargs):
+        if self.request.headers.get("HX-Request") == "true":
+            # Renvoyer uniquement le wrapper quand HTMX demande un rafraîchissement
+            return render(self.request, "encaissement/includes/encaissements_list_wrapper.html", context)
+        return super().render_to_response(context, **response_kwargs)
 
 
 class EncaissementServicesView(LoginRequiredMixin, ListView):

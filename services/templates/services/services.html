@@ -50,7 +50,7 @@
                     <tr {% if service.statut_publication == 'supprimé' %}style="text-decoration: line-through;"{% endif %}>
                         <td>{{ service.nom }}</td>
                         <td>{{ service.reference }}</td>
-                        <td class="text-end">service.tarif|intpoint</td>
+                        <td class="text-end">{{service.tarif|intpoint}}</td>
                         <td class="text-center" style="white-space: nowrap">
                             <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#editModal{{ service.id }}" {% if not is_admin or service.statut_publication == 'supprimé' %}disabled{% endif %}>
                                 <i class="fa fa-edit"></i>
