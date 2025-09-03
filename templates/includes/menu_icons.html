@@ -1,0 +1,96 @@
+<li class="nav-item">
+  <a
+    class="nav-link {% if request.resolver_match.url_name == 'accueil' %}active{% endif %}"
+    href="{% url 'accueil' %}"
+    data-title="Commandes"
+  >
+    <i class="fa fa-list-squares"></i>
+  </a>
+</li>
+
+<li class="nav-item">
+  <a
+    class="nav-link {% if request.resolver_match.url_name == 'encaissement' %}active{% endif %}"
+    href="{% url 'encaissement' %}"
+    data-title="Encaissement"
+  >
+    <i class="fa fa-shopping-cart"></i>
+  </a>
+</li>
+
+<li class="nav-item">
+  <a
+    class="nav-link {% if request.resolver_match.url_name == 'facturation' %}active{% endif %}"
+    href="{% url 'facturation' %}"
+    data-title="Facturation"
+  >
+    <i class="fa fa-file-invoice"></i>
+  </a>
+</li>
+
+{% comment %} <li class="nav-item">
+  <a
+    class="nav-link {% if request.resolver_match._name == 'inventaire_list' %}active{% endif %}"
+    href="{%  'inventaire_list' %}"
+    data-title="Inventaire"
+  >
+    <i class="fa fa-list-alt"></i>
+  </a>
+</li> {% endcomment %}
+
+<li class="nav-item">
+  <a
+    class="nav-link {% if request.resolver_match.url_name == 'listes-clients' %}active{% endif %}"
+    href="{% url 'listes-clients' %}"
+    data-title="Clients"
+  >
+    <i class="fa fa-user-group"></i>
+  </a>
+</li>
+
+<li class="nav-item">
+  <a
+    class="nav-link {% if request.resolver_match.url_name == 'services' %}active{% endif %}"
+    href="{% url 'services' %}"
+    data-title="Services"
+  >
+    <i class="fa fa-puzzle-piece"></i>
+  </a>
+</li>
+
+<li class="nav-item dropdown">
+  <a
+    class="nav-link dropdown-toggle "
+    href="#"
+    id="statsDropdown"
+    role="button"
+    data-bs-toggle="dropdown"
+    aria-expanded="false"
+    data-title="Statistiques"
+  >
+    <i class="fa fa-chart-bar"></i>
+  </a>
+  <ul class="dropdown-menu" aria-labelledby="statsDropdown">
+    <li><a class="dropdown-item" href="">Rapport de ventes</a></li>
+    <li><a class="dropdown-item" href="">Compte de résultat</a></li>
+    <li><a class="dropdown-item" href="">Bilan</a></li>
+  </ul>
+</li>
+
+<li class="nav-item dropdown">
+  <a
+    class="nav-link dropdown-toggle "
+    href="#"
+    id="settingsDropdown"
+    role="button"
+    data-bs-toggle="dropdown"
+    aria-expanded="false"
+    data-title="Paramètres"
+  >
+    <i class="fa fa-gear"></i>
+  </a>
+  <ul class="dropdown-menu" aria-labelledby="settingsDropdown">
+    <li><a class="dropdown-item" href="">Profil</a></li>
+    <li><a class="dropdown-item" href="">Configuration</a></li>
+  </ul>
+</li>

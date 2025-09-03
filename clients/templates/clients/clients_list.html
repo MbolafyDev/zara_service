@@ -1,0 +1,151 @@
+{# templates/clients/clients_list.html #}
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Liste des clients{% endblock %}
+
+{% block content %}
+<div class="container mb-2">
+  <h2 class="text-center mb-2">Liste des clients</h2>
+
+  {# {% include "includes/messages_alert.html" %} #}
+
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <div class="d-flex gap-2">
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addEntrepriseModal">
+        <i class="fa fa-plus"></i> Ajouter un client
+      </button>
+    </div>
+
+    {# Toggle d’affichage (>= lg) #}
+    <div class="view-toggle d-none d-lg-flex gap-1"
+         data-storage-key="zr_display_clients"
+         data-target-url=""
+         data-target="#clients-list-wrapper">
+      <button type="button"
+              class="btn btn-outline-primary {% if display_mode == 'table' %}active{% endif %}""
+              data-mode="table" title="Mode Tableau">
+        <i class="fa fa-table"></i>
+      </button>
+      <button type="button"
+              class="btn btn-outline-primary {% if display_mode == 'cards' %}active{% endif %}"
+              data-mode="cards" title="Mode Cartes">
+        <i class="fa fa-credit-card"></i>
+      </button>
+    </div>
+  </div>
+
+  <form id="clientsFilterForm" method="get" class="row g-2 mb-3"
+        hx-get=""
+        hx-target="#clients-list-wrapper"
+        hx-trigger="change delay:300ms, submit"
+        hx-push-url="true">
+
+    <div class="col-md-3">
+      <input type="text" name="nom" class="form-control" placeholder="Nom" value="">
+    </div>
+    <div class="col-md-3">
+      <input type="text" name="lieu" class="form-control" placeholder="Lieu" value="">
+    </div>
+    <div class="col-md-3">
+      <input type="text" name="contact" class="form-control" placeholder="Contact" value="">
+    </div>
+    <div class="col-md-3">
+      <button type="submit" class="btn btn-outline-primary w-100">
+        <i class="fa fa-search"></i> Rechercher
+      </button>
+    </div>
+
+    {# Champs cachés pour préserver display + page #}
+    <input type="hidden" name="display" id="display_input" value="">
+    <input type="hidden" name="page" id="page_input" value="">
+  </form>
+
+  {# Wrapper HTMX #}
+  <div id="clients-list-wrapper"
+       hx-get=""
+       hx-target="#clients-list-wrapper"
+       hx-swap="outerHTML"
+       hx-trigger="load">
+    {% include "clients/includes/clients_list_wrapper.html" %}
+  </div>
+
+  {% include "common/includes/pagination.html" with page_obj=page_obj extra_querystring=extra_querystring %}
+
+  {# 🔴 Zone modals FIXE (restent dans le DOM principal) #}
+  <div id="clients-modals">
+    {% for client in clients %}
+      {% include "clients/includes/modal_edit_entreprise.html" with entreprise=client %}
+      {% include "clients/includes/modal_delete_entreprise.html" with entreprise=client %}
+    {% endfor %}
+  </div>
+</div>
+{% include 'clients/includes/add_client.html' %}
+
+
+
+<style>
+  .view-toggle .btn{padding:.375rem .6rem}
+  .view-toggle .btn.active{pointer-events:none}
+</style>
+
+<script>
+  (function () {
+    const toggle = document.querySelector('.view-toggle');
+    const form = document.getElementById('clientsFilterForm');
+    const displayInput = document.getElementById('display_input');
+
+    if (!toggle || !form || !displayInput) return;
+
+    const getUrlPage = () => (new URLSearchParams(location.search)).get('page') || '';
+    const getOrMakePageInput = () => {
+      let el = document.getElementById('page_input');
+      if (!el) {
+        el = document.createElement('input');
+        el.type = 'hidden'; el.name = 'page'; el.id = 'page_input';
+        form.appendChild(el);
+      }
+      return el;
+    };
+
+    // Toggle
+    toggle.addEventListener('click', function (e) {
+      const btn = e.target.closest('button[data-mode]');
+      if (!btn) return;
+
+      const mode = btn.dataset.mode;
+      toggle.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const storageKey = toggle.dataset.storageKey || 'display_clients';
+      localStorage.setItem(storageKey, mode);
+
+      displayInput.value = mode;
+      const pageInput = getOrMakePageInput();
+      pageInput.value = getUrlPage(); // conserve la page courante
+
+      if (form.requestSubmit) form.requestSubmit(); else form.submit();
+    });
+
+    // Si un filtre change → revenir page 1
+    ['nom','lieu','contact'].forEach(id => {
+      const el = document.querySelector(`[name="${id}"]`);
+      if (!el) return;
+      el.addEventListener('change', () => {
+        const pageInput = getOrMakePageInput();
+        pageInput.value = '';
+      });
+    });
+
+    // Après swap HTMX, resync page_input
+    if (window.htmx) {
+      htmx.on('htmx:afterSwap', function (evt) {
+        if (evt.target && evt.target.id === 'clients-list-wrapper') {
+          const pageInput = getOrMakePageInput();
+          pageInput.value = getUrlPage();
+        }
+      });
+    }
+  })();
+</script>
+{% endblock %}
