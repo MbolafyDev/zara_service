@@ -1,31 +1,19 @@
-<<<<<<< HEAD
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import render, redirect, get_object_or_404
-from django.views.generic import TemplateView, ListView
-from django.views import View
-=======
 # clients/views.py
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import redirect, get_object_or_404
 from django.views.generic import ListView, View
->>>>>>> 8aa50e8 (projet presque fini)
 from django.utils.dateparse import parse_date
 from django.core.validators import URLValidator, validate_email
 from django.core.exceptions import ValidationError
 from django.contrib import messages
 from django.db import transaction, IntegrityError
-<<<<<<< HEAD
-from .models import Entreprise
-
-# Liste des clients - accessible uniquement si connecté
-class ClientView(LoginRequiredMixin, ListView):  # Nom de l’URL de login
-=======
 
 from common.utils import is_admin
 from .models import Entreprise
 
 
 class AdminRequiredMixin(UserPassesTestMixin):
+    """Mixin qui autorise uniquement les admins définis par common.utils.is_admin"""
     def test_func(self):
         return is_admin(self.request.user)
 
@@ -34,37 +22,25 @@ class AdminRequiredMixin(UserPassesTestMixin):
         return redirect("listes-clients")
 
 
-# Liste des clients
+# --- LISTE DES CLIENTS -------------------------------------------------------
 class ClientView(LoginRequiredMixin, ListView):
->>>>>>> 8aa50e8 (projet presque fini)
     model = Entreprise
     template_name = "clients/clients_list.html"
-    context_object_name = 'clients'
+    context_object_name = "clients"
     paginate_by = 10
 
     def get_context_data(self, **kwargs):
-<<<<<<< HEAD
-        context =  super().get_context_data(**kwargs)
-        context['display_mode'] = self.request.GET.get('display', 'table')
-        context['extra_querystring'] = self.request.GET.urlencode()
-        return context
-
-# Création d’entreprise
-class EntrepriseCreateView(LoginRequiredMixin, View):
-
-=======
         ctx = super().get_context_data(**kwargs)
         ctx.update({
-            'display_mode': self.request.GET.get('display', 'table'),
-            'extra_querystring': self.request.GET.urlencode(),
-            'is_admin': is_admin(self.request.user),   # 👈 pour le template
+            "display_mode": self.request.GET.get("display", "table"),
+            "extra_querystring": self.request.GET.urlencode(),
+            "is_admin": is_admin(self.request.user),  # pour désactiver les boutons côté template
         })
         return ctx
 
 
-# Création d’entreprise (inchangé)
+# --- CREATION D’ENTREPRISE ---------------------------------------------------
 class EntrepriseCreateView(LoginRequiredMixin, View):
->>>>>>> 8aa50e8 (projet presque fini)
     def post(self, request, *args, **kwargs):
         data = {k: request.POST.get(k) or None for k in [
             "raison_sociale", "date_debut", "page_facebook", "lien_page",
@@ -86,7 +62,7 @@ class EntrepriseCreateView(LoginRequiredMixin, View):
                 try:
                     url_validator(data[field])
                 except ValidationError:
-                    errors.append(f"L’URL fournie pour « {field.replace('_', ' ')} » est invalide.")
+                    errors.append(f"L’URL fournie pour « {field.replace('_', ' ') } » est invalide.")
 
         if data["email"]:
             try:
@@ -97,6 +73,7 @@ class EntrepriseCreateView(LoginRequiredMixin, View):
         if errors:
             for e in errors:
                 messages.warning(request, e)
+            # Réouvrir le modal d’ajout
             return redirect(f"{request.META.get('HTTP_REFERER','/')}?open=addEntrepriseModal")
 
         try:
@@ -109,14 +86,8 @@ class EntrepriseCreateView(LoginRequiredMixin, View):
         return redirect("listes-clients")
 
 
-<<<<<<< HEAD
-# Mise à jour d’entreprise
-class EntrepriseUpdateView(LoginRequiredMixin, View):
-
-=======
-# Mise à jour d’entreprise — 👇 protégé par AdminRequiredMixin
+# --- MISE A JOUR D’ENTREPRISE (protégée admin) --------------------------------
 class EntrepriseUpdateView(LoginRequiredMixin, AdminRequiredMixin, View):
->>>>>>> 8aa50e8 (projet presque fini)
     def post(self, request, entreprise_id, *args, **kwargs):
         entreprise = get_object_or_404(Entreprise, id=entreprise_id)
         data = {k: request.POST.get(k) or None for k in [
@@ -139,7 +110,7 @@ class EntrepriseUpdateView(LoginRequiredMixin, AdminRequiredMixin, View):
                 try:
                     url_validator(data[field])
                 except ValidationError:
-                    errors.append(f"L’URL fournie pour « {field.replace('_', ' ')} » est invalide.")
+                    errors.append(f"L’URL fournie pour « {field.replace('_', ' ') } » est invalide.")
 
         if data["email"]:
             try:
@@ -150,6 +121,7 @@ class EntrepriseUpdateView(LoginRequiredMixin, AdminRequiredMixin, View):
         if errors:
             for e in errors:
                 messages.warning(request, e)
+            # Réouvrir le modal d’édition
             return redirect(f"{request.META.get('HTTP_REFERER','/')}?open=editModal{entreprise.id}")
 
         for field, val in data.items():
@@ -165,13 +137,8 @@ class EntrepriseUpdateView(LoginRequiredMixin, AdminRequiredMixin, View):
         return redirect("listes-clients")
 
 
-<<<<<<< HEAD
-# Suppression d’entreprise
-class EntrepriseDeleteView(LoginRequiredMixin, View):
-=======
-# Suppression d’entreprise — 👇 protégé par AdminRequiredMixin
+# --- SUPPRESSION D’ENTREPRISE (protégée admin) --------------------------------
 class EntrepriseDeleteView(LoginRequiredMixin, AdminRequiredMixin, View):
->>>>>>> 8aa50e8 (projet presque fini)
     def post(self, request, entreprise_id, *args, **kwargs):
         entreprise = get_object_or_404(Entreprise, id=entreprise_id)
 
@@ -180,4 +147,5 @@ class EntrepriseDeleteView(LoginRequiredMixin, AdminRequiredMixin, View):
         else:
             entreprise.delete()
 
+        messages.success(request, "Entreprise supprimée avec succès.")
         return redirect("listes-clients")

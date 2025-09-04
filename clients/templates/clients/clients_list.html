@@ -8,11 +8,8 @@
 <div class="container mb-2">
   <h2 class="text-center mb-2">Liste des clients</h2>
 
-<<<<<<< HEAD
   {# {% include "includes/messages_alert.html" %} #}
-=======
-  {% include "includes/messages_alert.html" %}
->>>>>>> 8aa50e8 (projet presque fini)
+
 
   <div class="d-flex justify-content-between align-items-center mb-2">
     <div class="d-flex gap-2">
@@ -26,10 +23,7 @@
          data-storage-key="zr_display_clients"
          data-target-url=""
          data-target="#clients-list-wrapper">
-<<<<<<< HEAD
-=======
          
->>>>>>> 8aa50e8 (projet presque fini)
       <button type="button"
               class="btn btn-outline-primary {% if display_mode == 'table' %}active{% endif %}""
               data-mode="table" title="Mode Tableau">
@@ -85,10 +79,7 @@
     {% for client in clients %}
       {% include "clients/includes/modal_edit_entreprise.html" with entreprise=client %}
       {% include "clients/includes/modal_delete_entreprise.html" with entreprise=client %}
-<<<<<<< HEAD
-=======
       {% include "clients/includes/modal_detail_client.html" with entreprise=client %}
->>>>>>> 8aa50e8 (projet presque fini)
     {% endfor %}
   </div>
 </div>

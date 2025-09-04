@@ -11,23 +11,15 @@
             <p class="card-text mb-0"><strong>Adresse :</strong> {{ client.adresse|default_if_none:'' }}</p>
           </div>
           <div class="card-footer text-end">
-<<<<<<< HEAD
-            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editModal{{ client.id }}">
-=======
             <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#detailsModal{{ client.id }}">
                 <i class="fa fa-eye"></i>
             </button> 
             <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#editModal{{ client.id }}" {% if not is_admin %}disabled{% endif %}>
->>>>>>> 8aa50e8 (projet presque fini)
               <i class="fa fa-edit"></i>
             </button>
             <button class="btn btn-sm btn-outline-danger"
                     data-bs-toggle="modal" data-bs-target="#deleteModal{{ client.id }}"
-<<<<<<< HEAD
                     {% if not is_admin or client.statut_publication == 'supprimé' %}disabled{% endif %}>
-=======
-                    {% if not is_admin or client.statut_publication == 'supprimé' %}disabled{% endif %} {% if not is_admin %}disabled{% endif %}>
->>>>>>> 8aa50e8 (projet presque fini)
               <i class="fa fa-trash"></i>
             </button>
           </div>

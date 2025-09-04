@@ -2,9 +2,6 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-<<<<<<< HEAD
-    
-=======
     path('', views.configuration_view, name='configuration'),
     
     path('ajouter_page/', views.ajouter_page, name='ajouter_page'),
@@ -18,5 +15,4 @@ urlpatterns = [
     path('ajouter_plan/', views.ajouter_plan, name='ajouter_plan'),
     path('modifier_plan/<int:pk>/', views.modifier_plan, name='modifier_plan'),
     path('supprimer_plan/<int:pk>/', views.supprimer_plan, name='supprimer_plan'),
->>>>>>> 8aa50e8 (projet presque fini)
 ]
