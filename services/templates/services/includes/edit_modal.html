@@ -1,7 +1,8 @@
+{# templates/services/includes/edit_modal.html #}
 <div class="modal fade" id="editModal{{ service.id }}" tabindex="-1" aria-labelledby="editModalLabel{{ service.id }}" aria-hidden="true">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
-      <form method="post" action="">
+      <form method="post" action="{% url 'service_edit' service.id %}">
         {% csrf_token %}
         <div class="modal-header">
           <h5 class="modal-title" id="editModalLabel{{ service.id }}">Modifier le service</h5>
@@ -14,7 +15,7 @@
           </div>
           <div class="mb-3">
             <label for="reference{{ service.id }}" class="form-label">Référence</label>
-            <input type="text" class="form-control" id="reference{{ service.id }}" name="reference" value="{{ service.reference }}" required>
+            <input type="text" class="form-control" id="reference{{ service.id }}" name="reference" value="{{ service.reference|default_if_none:'' }}">
           </div>
           <div class="mb-3">
             <label for="tarif{{ service.id }}" class="form-label">Tarif (Ar)</label>
@@ -23,7 +24,7 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-          <button type="submit" class="btn btn-primary">Enregistrer</button>
+          <button type="submit" class="btn btn-primary" {% if not is_admin %}disabled{% endif %}>Enregistrer</button>
         </div>
       </form>
     </div>

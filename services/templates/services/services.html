@@ -91,13 +91,26 @@
             <td>{{ service.reference }}</td>
             <td class="text-end">{{ service.tarif|intpoint }}</td>
             <td class="text-center" style="white-space: nowrap">
-              <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#editModal{{ service.id }}" {% if not is_admin or service.statut_publication == 'supprimé' %}disabled{% endif %}>
-                <i class="fa fa-edit"></i>
-              </button>
-              <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ service.id }}" {% if not is_admin or service.statut_publication == 'supprimé' %}disabled{% endif %}>
-                <i class="fa fa-trash"></i>
-              </button>
+                <button type="button"
+                        class="btn btn-sm btn-outline-primary me-1"
+                        data-url="{% url 'service_detail_modal' service.id %}"
+                        onclick="openServiceModal(this)">
+                <i class="fa fa-eye"></i>
+                </button>
+
+                <button class="btn btn-sm btn-outline-success me-1"
+                        data-bs-toggle="modal" data-bs-target="#editModal{{ service.id }}"
+                        {% if not is_admin or service.statut_publication == 'supprimé' %}disabled{% endif %}>
+                    <i class="fa fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger"
+                        data-bs-toggle="modal" data-bs-target="#deleteModal{{ service.id }}"
+                        {% if not is_admin or service.statut_publication == 'supprimé' %}disabled{% endif %}>
+                    <i class="fa fa-trash"></i>
+                </button>
             </td>
+
+
           </tr>
           {% endfor %}
         </tbody>
@@ -114,7 +127,7 @@
        ">
     <div class="row">
       {% for service in services %}
-      <div class="col-md-6 mb-4">
+      <div class="col-md-4 mb-4">
         <div class="card h-100 shadow-sm" {% if service.statut_publication == 'supprimé' %}style="text-decoration: line-through;"{% endif %}>
           <div class="card-body">
             <h5 class="card-title text-primary">{{ service.nom }}</h5>
@@ -122,10 +135,17 @@
             <p class="mb-2"><strong>Tarif :</strong> {{ service.tarif|intpoint }} Ar</p>
           </div>
           <div class="card-footer text-end">
-            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editModal{{ service.id }}" {% if not is_admin or service.statut_publication == 'supprimé' %}disabled{% endif %}>
+            <button type="button"
+                    class="btn btn-sm btn-outline-primary me-1"
+                    data-url="{% url 'service_detail_modal' service.id %}"
+                    onclick="openServiceModal(this)">
+            <i class="fa fa-eye"></i>
+            </button>
+
+            <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#editModal{{ service.id }}" {% if not is_admin or service.statut_publication == 'supprimé' %}disabled{% endif %}>
               <i class="fa fa-edit"></i>
             </button>
-            <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ service.id }}" {% if not is_admin or service.statut_publication == 'supprimé' %}disabled{% endif %}>
+            <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ service.id }}" {% if not is_admin or service.statut_publication == "supprimé" %}disabled{% endif %}>
               <i class="fa fa-trash"></i>
             </button>
           </div>
@@ -137,8 +157,8 @@
 
   {# Modals #}
   {% for service in services %}
-    {% include "vente/includes/edit_modal.html" with service=service %}
-    {% include "vente/includes/delete_modal.html" with service=service %}
+    {% include "services/includes/edit_modal.html" with service=service %}
+    {% include "services/includes/delete_modal.html" with service=service %}
   {% endfor %}
 
   {% else %}
@@ -148,6 +168,14 @@
   {% include "common/includes/pagination.html" with page_obj=page_obj extra_querystring=extra_querystring %}
 
 </div>
+
+{# Modal détail service (statique, le contenu sera injecté en JS) #}
+<div class="modal fade" id="serviceDetailModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-md modal-dialog-scrollable">
+    <div class="modal-content" id="serviceDetailContent"></div>
+  </div>
+</div>
+
 
 {# Modal création #}
 <div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
@@ -238,5 +266,58 @@
     });
   })();
 </script>
+
+<script>
+  function openServiceModal(button) {
+    const url = button.getAttribute('data-url'); // ✅ plus robuste que replace()
+
+    const modalEl = document.getElementById('serviceDetailModal');
+    const modalContent = document.getElementById('serviceDetailContent');
+
+    modalContent.innerHTML = `
+      <div class="modal-header">
+        <h5 class="modal-title">Chargement…</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body text-center py-5">
+        <div class="spinner-border" role="status" aria-hidden="true"></div>
+      </div>`;
+
+    const bsModal = new bootstrap.Modal(modalEl);
+    bsModal.show();
+
+    fetch(url, {
+      credentials: 'same-origin',
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(async (r) => {
+      const ct = r.headers.get('Content-Type') || '';
+      if (!r.ok || !ct.includes('application/json')) {
+        throw new Error('Bad response');
+      }
+      return r.json();
+    })
+    .then(data => {
+      modalContent.innerHTML = data.html;
+    })
+    .catch(() => {
+      modalContent.innerHTML = `
+        <div class="modal-header">
+          <h5 class="modal-title text-danger">Erreur</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+        <div class="modal-body">Impossible de charger le détail du service.</div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+        </div>`;
+    });
+  }
+</script>
+
+
+
 
 {% endblock %}

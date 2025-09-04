@@ -1,0 +1,35 @@
+{# templates/services/includes/service_detail_modal.html #}
+{% load nombre %}
+
+<div class="modal-header">
+  <h5 class="modal-title">Détail du service</h5>
+  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+</div>
+
+<div class="modal-body">
+  <div class="mb-2">
+    <div class="small text-muted">Nom</div>
+    <div class="fw-semibold">{{ service.nom }}</div>
+  </div>
+
+  <div class="mb-2">
+    <div class="small text-muted">Référence</div>
+    <div class="fw-semibold">{{ service.reference|default:"—" }}</div>
+  </div>
+
+  <div class="mb-2">
+    <div class="small text-muted">Tarif</div>
+    <div class="fw-semibold">{{ service.tarif|intpoint }} Ar</div>
+  </div>
+
+  {% if service.statut_publication %}
+  <div class="mb-2">
+    <div class="small text-muted">Statut</div>
+    <span class="badge bg-secondary">{{ service.statut_publication }}</span>
+  </div>
+  {% endif %}
+</div>
+
+<div class="modal-footer">
+  <button class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+</div>
