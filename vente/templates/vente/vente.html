@@ -4,6 +4,13 @@
 
 {% block title %}Commandes de services{% endblock %}
 
+{% block css_files %}
+  <style>
+  .view-toggle .btn { padding: .375rem .6rem; }
+  .view-toggle .btn.active { pointer-events: none; }
+  </style>
+{% endblock css_files %}
+
 {% block content %}
 <div class="container mb-2">
     
@@ -17,25 +24,30 @@
     </a>
 
     <!-- 🔀 Sélecteur d’affichage -->
-    <div class="btn-group" role="group" id="displayToggle" data-storage-key="zr_display_commandes">
+    {# 🔀 Sélecteur d’affichage : style “view-toggle” comme ton modèle #}
+    <div id="displayToggle"
+        class="view-toggle d-none d-lg-flex gap-1"
+        data-storage-key="zr_display_commandes">
       <button type="button"
-              class="btn btn-outline-primary {% if display_mode == 'auto' or not display_mode %}active{% endif %}"
-              data-mode="auto" title="Auto (table ≥ lg, cards < lg)">
-        <i class="fa fa-mobile-screen-button d-inline d-lg-none"></i>
-        <i class="fa fa-table d-none d-lg-inline"></i>
-        Auto
+              class="btn btn-outline-primary {% if display_mode == 'auto' %}active{% endif %}"
+              data-mode="auto" title="Auto">
+        <i class="fa fa-magic"></i>
       </button>
       <button type="button"
               class="btn btn-outline-primary {% if display_mode == 'table' %}active{% endif %}"
               data-mode="table" title="Mode Tableau">
-        <i class="fa fa-table"></i> Table
+        <i class="fa fa-table"></i>
       </button>
       <button type="button"
               class="btn btn-outline-primary {% if display_mode == 'cards' %}active{% endif %}"
               data-mode="cards" title="Mode Cartes">
-        <i class="fa fa-th-large"></i> Cards
+        <i class="fa fa-credit-card"></i>
       </button>
     </div>
+
+
+
+
   </div>
 
   <div class="row m-1">
@@ -287,13 +299,15 @@
 </div>
 
 <script>
-  // --- Modal suppression
+  // --- Modal suppression (inchangé)
   document.addEventListener('DOMContentLoaded', function () {
     const deleteModal = document.getElementById('deleteCommandeModal');
+    if (!deleteModal) return;
+
     deleteModal.addEventListener('show.bs.modal', function (event) {
       const button = event.relatedTarget;
-      const commandeId = button.getAttribute('data-id');
-      const commandeNum = button.getAttribute('data-numero');
+      const commandeId = button && button.getAttribute('data-id');
+      const commandeNum = button && button.getAttribute('data-numero');
       const form = document.getElementById('deleteCommandeForm');
       const numLabel = document.getElementById('commandeNum');
 
@@ -301,28 +315,36 @@
         const urlTplDelete = "{% url 'supprimer_commande_service' 0 %}";
         form.action = urlTplDelete.replace('/0/', `/${commandeId}/`);
       }
-      numLabel.textContent = commandeNum;
+      if (numLabel) numLabel.textContent = commandeNum || '';
     });
   });
 
-  // --- Construire l’URL de filtre proprement
+  // --- Fonction commune: construit l’URL propre + navigate
+  function buildAndNavigate(form) {
+    if (!form) return;
+    const base = form.getAttribute('action') || window.location.pathname;
+    const fd = new FormData(form);
+    const params = new URLSearchParams();
+
+    for (const [k, v] of fd.entries()) {
+      if (v !== null && String(v).trim() !== '') params.append(k, v);
+    }
+    const url = params.toString() ? `${base}?${params}` : base;
+    window.location.href = url;
+  }
+
+  // --- Soumission du formulaire de filtres en URL propre (inchangé mais factorisé)
   document.addEventListener('DOMContentLoaded', () => {
     const form = document.querySelector('form[action$=""]'); // ton form principal
     if (!form) return;
+
     form.addEventListener('submit', (e) => {
       e.preventDefault();
-      const base = form.getAttribute('action') || window.location.pathname;
-      const fd = new FormData(form);
-      const params = new URLSearchParams();
-      for (const [k, v] of fd.entries()) {
-        if (v !== null && String(v).trim() !== '') params.append(k, v);
-      }
-      const url = params.toString() ? `${base}?${params}` : base;
-      window.location.href = url;
+      buildAndNavigate(form);
     });
   });
 
-  // --- Détail commande (modal)
+  // --- Détail commande (modal) (inchangé)
   function openCommandeModal(button) {
     const commandeId = button.getAttribute('data-id');
     const urlTpl = "{% url 'detail_commande_service_modal' 0 %}";
@@ -337,6 +359,7 @@
       <div class="modal-body text-center py-5">
         <div class="spinner-border" role="status" aria-hidden="true"></div>
       </div>`;
+
     const commandeModal = new bootstrap.Modal(document.getElementById('commandeDetailModal'));
     commandeModal.show();
 
@@ -354,55 +377,57 @@
       });
   }
 
-  // --- Gestion du toggle d’affichage + persistance
+  // --- Toggle d’affichage + persistance (MÀJ FIABLE)
   (function() {
     const toggle = document.getElementById('displayToggle');
-    const form   = document.querySelector('form[action$=""]');
     const input  = document.getElementById('displayInput');
+    // Récupère **le bon form** via l'input caché (plus robuste que querySelector au hasard)
+    const form   = input && (input.form || input.closest('form'));
+
     if (!toggle || !form || !input) return;
 
     const storageKey = toggle.dataset.storageKey || 'zr_display_commandes';
+    const validModes = ['auto', 'table', 'cards'];
 
-    // Si pas de param display dans l’URL, tenter la valeur du localStorage
+    // Init: si pas de ?display= dans l’URL, charger la valeur locale
     (function bootstrapDisplay() {
       const urlParams = new URLSearchParams(window.location.search);
-      const urlDisplay = urlParams.get('display');
+      const urlDisplay = (urlParams.get('display') || '').toLowerCase();
+
       if (!urlDisplay) {
         const saved = localStorage.getItem(storageKey);
-        if (saved && ['auto','table','cards'].includes(saved)) {
+        if (saved && validModes.includes(saved)) {
           input.value = saved;
+          // mise en évidence du bon bouton à l’écran
+          const btn = toggle.querySelector(`button[data-mode="${saved}"]`);
+          if (btn) {
+            toggle.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+          }
         }
       }
     })();
 
-    const submitForm = () => {
-      // Reconstruit l’URL proprement avec les filtres + display
-      const fd = new FormData(form);
-      const params = new URLSearchParams();
-      for (const [k, v] of fd.entries()) {
-        if (v !== null && String(v).trim() !== '') params.append(k, v);
-      }
-      const base = form.getAttribute('action') || window.location.pathname;
-      window.location.href = params.toString() ? `${base}?${params}` : base;
-    };
-
+    // Au clic sur le toggle
     toggle.addEventListener('click', (e) => {
       const btn = e.target.closest('button[data-mode]');
       if (!btn) return;
-      const mode = btn.dataset.mode;
-      if (!['auto','table','cards'].includes(mode)) return;
+
+      const mode = (btn.dataset.mode || '').toLowerCase();
+      if (!validModes.includes(mode)) return;
 
       // UI
       toggle.querySelectorAll('button').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
 
-      // Persistance + MAJ champ caché
+      // Persist & update
       localStorage.setItem(storageKey, mode);
       input.value = mode;
 
-      // Rechargement avec le nouveau display
-      submitForm();
+      // Navigue avec l’URL propre (réutilise la même logique que le submit)
+      buildAndNavigate(form);
     });
   })();
 </script>
+
 {% endblock %}
