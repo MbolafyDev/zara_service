@@ -16,13 +16,28 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+<<<<<<< HEAD
+=======
+from django.conf.urls.static import static
+from django.conf import settings
+>>>>>>> 8aa50e8 (projet presque fini)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('vente.urls')),
+<<<<<<< HEAD
     path('', include('users.urls')),
     path('listes-clients/', include('clients.urls')),
     path('encaissement/', include('encaissement.urls')),
     path('facturation/', include('facturation.urls')),
     path('services/', include('services.urls')),
 ]
+=======
+    path('utilisateur/', include('users.urls')),
+    path('clients/', include('clients.urls')),
+    path('encaissement/', include('encaissement.urls')),
+    path('facturation/', include('facturation.urls')),
+    path('services/', include('services.urls')),
+    path('common/', include('common.urls')),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+>>>>>>> 8aa50e8 (projet presque fini)

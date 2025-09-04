@@ -19,7 +19,14 @@
           <td>{{ client.telephone|default_if_none:'' }}</td>
           <td>{{ client.adresse|default_if_none:'' }}</td>
           <td class="text-center" style="white-space: nowrap">
+<<<<<<< HEAD
             <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#editModal{{ client.id }}">
+=======
+            <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#detailsModal{{ client.id }}">
+                <i class="fa fa-eye"></i>
+            </button> 
+            <button class="btn btn-sm btn-outline-success me-1" data-bs-toggle="modal" data-bs-target="#editModal{{ client.id }}">
+>>>>>>> 8aa50e8 (projet presque fini)
               <i class="fa fa-edit"></i>
             </button>
             <button class="btn btn-sm btn-outline-danger"

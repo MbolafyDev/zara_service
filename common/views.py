@@ -14,7 +14,11 @@ def configuration_view(request):
         'pages': pages,
         'caisses': caisses,
         'plans': plans,
+<<<<<<< HEAD
         'type_choices': Pages.TYPE_CHOICES,   # ➕ pour alimenter les <option>
+=======
+        'type_choices': Pages.TYPE_CHOICES,
+>>>>>>> 8aa50e8 (projet presque fini)
     })
 
 @login_required

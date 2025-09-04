@@ -75,6 +75,11 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+<<<<<<< HEAD
+=======
+                'common.context_processors.is_admin_context',
+
+>>>>>>> 8aa50e8 (projet presque fini)
             ],
         },
     },
@@ -139,6 +144,13 @@ STATICFILES_DIRS = [
     BASE_DIR / "static"
 ]
 
+<<<<<<< HEAD
+=======
+# Fichiers médias
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+>>>>>>> 8aa50e8 (projet presque fini)
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
