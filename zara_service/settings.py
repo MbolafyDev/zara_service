@@ -85,20 +85,20 @@ WSGI_APPLICATION = "zara_service.wsgi.application"
 # -------------------------
 # Base de données MySQL (PythonAnywhere)
 # -------------------------
-DB_NAME = os.environ.get("DB_NAME", "zaraservice$default")
-DB_USER = os.environ.get("DB_USER", "zaraservice")
-DB_PASSWORD = os.environ.get("DB_PASSWORD", "")  # à définir dans les variables d’environnement
-DB_HOST = os.environ.get("DB_HOST", "zaraservice.mysql.pythonanywhere-services.com")
-DB_PORT = os.environ.get("DB_PORT", "3306")
+# Import des variables sensibles
+try:
+    import env_base_dir as env
+except ImportError:
+    env = None
 
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": DB_NAME,
-        "USER": DB_USER,
-        "PASSWORD": DB_PASSWORD,
-        "HOST": DB_HOST,
-        "PORT": DB_PORT,
+        "NAME": getattr(env, "DB_NAME", os.environ.get("DB_NAME", "")),
+        "USER": getattr(env, "DB_USER", os.environ.get("DB_USER", "")),
+        "PASSWORD": getattr(env, "DB_PASSWORD", os.environ.get("DB_PASSWORD", "")),
+        "HOST": getattr(env, "DB_HOST", os.environ.get("DB_HOST", "")),
+        "PORT": getattr(env, "DB_PORT", os.environ.get("DB_PORT", "3306")),
         "OPTIONS": {
             "charset": "utf8mb4",
             "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
