@@ -1,7 +1,6 @@
 # zara_service/settings/base.py
 from pathlib import Path
 import os
-from .env_base_dir import BASE_DIR
 
 # ── Chemins
 BASE_DIR = Path(__file__).resolve().parent.parent.parent  # dossier contenant manage.py
@@ -11,7 +10,6 @@ SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "change-me-in-prod")
 DEBUG = False
 ALLOWED_HOSTS: list[str] = []
 CSRF_TRUSTED_ORIGINS: list[str] = []
-
 
 # ── Applications
 INSTALLED_APPS = [
@@ -23,7 +21,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.humanize",
 
-    # Apps projet (repris de ton fichier)
+    # Apps projet
     "services",
     "pwa",
     "clients",
@@ -57,7 +55,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                # ton context processor custom
+                # context processor custom du projet
                 "common.context_processors.is_admin_context",
             ],
         },
@@ -66,7 +64,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "zara_service.wsgi.application"
 
-# ── Base de données (définie dans dev/prod)
+# ── Base de données (laisse vide ici, défini dans dev/prod)
 DATABASES: dict = {}
 
 # ── Auth
@@ -83,7 +81,7 @@ LOGIN_URL = "/login/"
 LOGOUT_REDIRECT_URL = "/login/"
 LOGIN_REDIRECT_URL = "/"
 
-# ── Internationalisation (ajuste si tu préfères en-us/UTC)
+# ── Internationalisation
 LANGUAGE_CODE = "fr-fr"
 TIME_ZONE = "Indian/Antananarivo"
 USE_I18N = True
@@ -91,18 +89,11 @@ USE_TZ = True
 
 # ── Fichiers statiques & médias
 STATIC_URL = "/static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"      # cible de collectstatic en prod
-# facultatif en dev : dossier "static/" du projet si présent
+STATIC_ROOT = BASE_DIR / "staticfiles"                     # cible de collectstatic en prod
 STATICFILES_DIRS = [BASE_DIR / "static"] if (BASE_DIR / "static").exists() else []
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
-TEMPLATES = [{"DIRS": [BASE_DIR / "templates"]}]
-STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_DIRS = [BASE_DIR / "static"]  # si présent
-MEDIA_ROOT = BASE_DIR / "media"
-DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": BASE_DIR / "db.sqlite3"}}
-
 
 # ── Email (surchargé en dev/prod si besoin)
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
